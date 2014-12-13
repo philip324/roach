@@ -11,24 +11,27 @@
 
 //TODO: Restructure this whole file
 
-#include "pid-ip2.5.h"
-#include "dfmem.h"
-#include "timer.h"
-#include "adc_pid.h"
+// XC compiler include
+#include <xc.h>
+
+// Library includes
 #include "pwm.h"
 #include "adc.h"
-#include "p33Fxxxx.h"
+#include "timer.h"
+#include <stdlib.h> // for malloc
+
+// imageproc-lib includes
+#include "utils.h"
 #include "sclock.h"
-#include "ams-enc.h"
-#include "tih.h"
-#include "mpu6000.h"
+#include "pid-ip2.5.h"
 #include "uart_driver.h"
 #include "ppool.h"
 #include "dfmem.h"
 #include "telem.h"
-#include "utils.h"
-
-#include <stdlib.h> // for malloc
+#include "adc_pid.h"
+#include "ams-enc.h"
+#include "tih.h"
+#include "mpu6000.h"
 
 
 #define MC_CHANNEL_PWM1     1
