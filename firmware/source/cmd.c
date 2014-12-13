@@ -4,7 +4,6 @@
 #include "utils.h"
 #include "ports.h"
 #include "sclock.h"
-#include "led.h"
 #include "blink.h"
 #include "payload.h"
 #include "mac_packet.h"
@@ -20,6 +19,8 @@
 #include "ams-enc.h"
 #include "carray.h"
 #include "telem.h"
+
+#include "utils.h"
 
 #include <stdio.h>
 #include <string.h>

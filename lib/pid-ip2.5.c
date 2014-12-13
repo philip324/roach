@@ -8,12 +8,14 @@
  * modified Jan. 2012 to include median filter on back emf
  * modified Jan. 2013 to include AMS Hall encoder, and MPU 6000 gyro
  */
+
+//TODO: Restructure this whole file
+
 #include "pid-ip2.5.h"
 #include "dfmem.h"
 #include "timer.h"
 #include "adc_pid.h"
 #include "pwm.h"
-#include "led.h"
 #include "adc.h"
 #include "p33Fxxxx.h"
 #include "sclock.h"
@@ -24,9 +26,9 @@
 #include "ppool.h"
 #include "dfmem.h"
 #include "telem.h"
+#include "utils.h"
 
 #include <stdlib.h> // for malloc
-#include "init.h"  // for Timer1
 
 
 #define MC_CHANNEL_PWM1     1
@@ -62,6 +64,7 @@ char calib_flag = 0;   // flag is set if doing calibration
 long offsetAccumulatorL, offsetAccumulatorR;
 unsigned int offsetAccumulatorCounter;
 
+static void SetupTimer1(void); //Static so that other modules don't try to call
 
 
 // 2 last readings for median filter
@@ -574,4 +577,13 @@ void UpdatePID(pidPos *pid)
 	}      
 }
 
-
+// Timer 1 is used for main pid motor control loop
+static void SetupTimer1(void)
+{
+    unsigned int T1CON1value, T1PERvalue;
+    T1CON1value = T1_ON & T1_SOURCE_INT & T1_PS_1_8 & T1_GATE_OFF &
+                  T1_SYNC_EXT_OFF & T1_INT_PRIOR_2;
+    T1PERvalue = 0x03E8; //clock period = 0.0002s = ((T1PERvalue * prescaler)/FCY) (5000Hz)
+  	t1_ticks = 0;
+    OpenTimer1(T1CON1value, T1PERvalue);
+}
