@@ -30,15 +30,16 @@
       <logicalFolder name="lib" displayName="lib" projectFiles="true">
         <itemPath>../lib/cmd_const.h</itemPath>
         <itemPath>../lib/consts.h</itemPath>
+        <itemPath>../lib/init.h</itemPath>
+        <itemPath>../lib/interrupts.h</itemPath>
+        <itemPath>../lib/led.h</itemPath>
         <itemPath>../lib/pid-ip2.5.h</itemPath>
         <itemPath>../lib/tests.h</itemPath>
         <itemPath>../lib/telem.h</itemPath>
         <itemPath>../lib/vr_telem.h</itemPath>
       </logicalFolder>
-      <logicalFolder name="f1" displayName="settings" projectFiles="true">
-        <itemPath>../../imageproc-settings/settings.h</itemPath>
-      </logicalFolder>
       <itemPath>source/cmd.h</itemPath>
+      <itemPath>source/settings.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -89,7 +90,6 @@
     <Elem>.</Elem>
     <Elem>../lib</Elem>
     <Elem>../../imageproc-lib</Elem>
-    <Elem>../../imageproc-settings</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -101,8 +101,8 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>RealICEPlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.21</languageToolchainVersion>
-        <platform>4</platform>
+        <languageToolchainVersion>1.23</languageToolchainVersion>
+        <platform>3</platform>
       </toolsSet>
       <compileType>
         <linkerTool>
@@ -119,7 +119,7 @@
       </compileType>
       <makeCustomizationType>
         <makeCustomizationPreStepEnabled>true</makeCustomizationPreStepEnabled>
-        <makeCustomizationPreStep>python ../../imageproc-lib/version.py 'DHALDANE_ROACH;AMS_ENC'</makeCustomizationPreStep>
+        <makeCustomizationPreStep>python ..\..\imageproc-lib\prebuild.py ..\..\imageproc-settings\settings.h</makeCustomizationPreStep>
         <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
         <makeCustomizationPostStep></makeCustomizationPostStep>
         <makeCustomizationPutChecksumInUserID>false</makeCustomizationPutChecksumInUserID>
@@ -228,7 +228,7 @@
         <property key="secure-flash" value="no_flash"/>
         <property key="secure-ram" value="no_ram"/>
         <property key="secure-write-protect" value="no_write_protect"/>
-        <property key="stack-size" value="16"/>
+        <property key="stack-size" value="512"/>
         <property key="symbol-stripping" value=""/>
         <property key="trace-symbols" value=""/>
         <property key="warn-section-align" value="false"/>
