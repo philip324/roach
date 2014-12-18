@@ -85,7 +85,7 @@ typedef struct{
 
 //cmdSetPhase
 typedef struct{
-    int32_t phase;
+    int32_t offset;
 } _args_cmdSetPhase;
 
 

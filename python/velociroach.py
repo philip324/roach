@@ -134,9 +134,9 @@ class Velociroach:
         lastRightDelta = 1-sum(gaitConfig.deltasRight)
         
         temp = [int(periodLeft), int(gaitConfig.deltasLeft[0]*deltaConv), int(gaitConfig.deltasLeft[1]*deltaConv),
-                int(gaitConfig.deltasLeft[2]*deltaConv), int(lastLeftDelta*deltaConv) , 1, \
+                int(gaitConfig.deltasLeft[2]*deltaConv), int(lastLeftDelta*deltaConv) , 0, \
                 int(periodRight), int(gaitConfig.deltasRight[0]*deltaConv), int(gaitConfig.deltasRight[1]*deltaConv),
-                int(gaitConfig.deltasRight[2]*deltaConv), int(lastRightDelta*deltaConv), 1]
+                int(gaitConfig.deltasRight[2]*deltaConv), int(lastRightDelta*deltaConv), 0]
         
         self.clAnnounce()
         print "     ",temp
@@ -145,16 +145,16 @@ class Velociroach:
         time.sleep(0.1)
     
     #TODO: This may be a vestigial function. Check versus firmware.
-    def setMotorMode(self, motorgains, retries = 8 ):
-        tries = 1
-        self.motorGains = motorgains
-        self.motor_gains_set = False
-        while not(self.motor_gains_set) and (tries <= retries):
-            self.clAnnounce()
-            print "Setting motor mode...   ",tries,"/8"
-            self.tx( 0, command.SET_MOTOR_MODE, pack('10h',*gains))
-            tries = tries + 1
-            time.sleep(0.1)
+    def setMotorMode(self, mode):
+        self.clAnnounce()
+        print "Setting motor mode to", mode
+        self.tx( 0, command.SET_MOTOR_MODE, pack('h',mode))
+        time.sleep(0.1)
+            
+    def setZeroMotorPosition(self):
+        self.clAnnounce()
+        print "Zeroing motor position"
+        self.tx( 0, command.ZERO_POS, "Zero motor")
     
     ######TODO : sort out this function and flashReadback below
     def downloadTelemetry(self, timeout = 5, retry = True):
@@ -168,7 +168,7 @@ class Velociroach:
         shared.last_packet_time = dlStart
         #bytesIn = 0
         while self.telemtryData.count([]) > 0:
-            time.sleep(0.02)
+            time.sleep(0.04)
             dlProgress(self.numSamples - self.telemtryData.count([]) , self.numSamples)
             if (time.time() - shared.last_packet_time) > timeout:
                 print ""
@@ -218,7 +218,9 @@ class Velociroach:
         self.findFileName()
         self.writeFileHeader()
         fileout = open(self.dataFileName, 'a')
-        np.savetxt(fileout , np.array(self.telemtryData), self.telemFormatString, delimiter = ',')
+        sanitized = [item for item in self.telemtryData if item]
+        np.savetxt(fileout , np.array(sanitized), self.telemFormatString, delimiter = ',')
+        #np.savetxt(fileout , np.array(self.telemtryData), self.telemFormatString, delimiter = ',')
         fileout.close()
         self.clAnnounce()
         print "Telemetry data saved to", self.dataFileName
@@ -290,6 +292,7 @@ class Velociroach:
         self.setPhase(gaitConfig.phase)
         self.setMotorGains(gaitConfig.motorgains)
         self.setVelProfile(gaitConfig) #whole object is passed in, due to several references
+        self.setZeroMotorPosition()
         
         self.clAnnounce()
         print " ------------------------------------ "

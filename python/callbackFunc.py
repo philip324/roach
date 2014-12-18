@@ -25,7 +25,6 @@ pktFormat = { \
     command.ECHO:                   'c' ,\
     command.SET_VEL_PROFILE:        '8h' ,\
     command.WHO_AM_I:               '', \
-    command.ZERO_POS:               '=2l', \
     }
                
 #XBee callback function, called every time a packet is recieved
@@ -136,8 +135,15 @@ def xbee_received(packet):
             print "query : ",data
             for r in shared.ROBOTS:
                 if r.DEST_ADDR_int == src_addr:
-                    r.robot_queried = True 
+                    r.robot_queried = True
 
+        # GET_AMS_POS
+        elif (type == command.GET_AMS_POS):
+            datum = unpack(pattern, data)
+            #This command sends back a useless parameter, we need not display it
+            #print "Motor positions: { %d , %d }" % (datum[0], datum[1])
+
+                  
     except Exception as args:
         print "\nGeneral exception from callbackfunc:",args
         print "\n    ******    TRACEBACK    ******    "

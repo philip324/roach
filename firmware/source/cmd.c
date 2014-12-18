@@ -30,8 +30,8 @@
 unsigned char (*cmd_func[MAX_CMD_FUNC])(unsigned char, unsigned char, unsigned char, unsigned char*);
 void cmdError(void);
 
-extern pidPos pidObjs[NUM_PIDS];
-extern EncObj encPos[NUM_ENC];
+//extern pidPos pidObjs[NUM_PIDS];
+//extern EncObj encPos[NUM_ENC];
 extern volatile CircArray fun_queue;
 
 /*-----------------------------------------------------------------------------
@@ -86,6 +86,7 @@ void cmdSetup(void) {
 
 }
 
+//TODO: cmdPushFunc is deprecated, to be removed.
 void cmdPushFunc(MacPacket rx_packet) {
     Payload rx_payload;
     unsigned char command;
@@ -123,14 +124,12 @@ unsigned char cmdWhoAmI(unsigned char type, unsigned char status, unsigned char 
 unsigned char cmdGetAMSPos(unsigned char type, unsigned char status,
         unsigned char length, unsigned char *frame) {
     long motor_count[2];
-    motor_count[0] = pidObjs[0].p_state;
-    motor_count[1] = pidObjs[1].p_state;
-
-    // motor_count[0] = encPos[0].pos;
-    // motor_count[1] = encPos[1].pos;
+    motor_count[0] = pidGetPState(LEFT_LEGS_PID_NUM);
+    motor_count[1] = pidGetPState(RIGHT_LEGS_PID_NUM);
 
     radioSendData(RADIO_DST_ADDR, status, CMD_GET_AMS_POS,  //TODO: Robot should respond to source of query, not hardcoded address
             sizeof(motor_count), (unsigned char *)motor_count, 0);
+
     return 1;
 }
 // ==== Flash/Experiment Commands ==============================================================================
@@ -141,12 +140,15 @@ unsigned char cmdStartTimedRun(unsigned char type, unsigned char status, unsigne
 
     int i;
     for (i = 0; i < NUM_PIDS; i++){
-        pidObjs[i].timeFlag = 1;
+        pidSetTimeFlag(i,1);
+        //pidObjs[i].timeFlag = 1;
         pidSetInput(i, 0);
         checkSwapBuff(i);
         pidOn(i);
     }
-    pidObjs[0].mode = 0;
+    
+    pidSetMode(LEFT_LEGS_PID_NUM ,PID_MODE_CONTROLED);
+
     pidStartTimedTrial(argsPtr->run_time);
 
     return 1;
@@ -188,7 +190,6 @@ unsigned char cmdSetThrustOpenLoop(unsigned char type, unsigned char status, uns
 
     tiHSetDC(argsPtr->channel, argsPtr->dc);
 
-
     EnableIntT1;
     return 1;
  } 
@@ -197,10 +198,11 @@ unsigned char cmdSetMotorMode(unsigned char type, unsigned char status, unsigned
     //Unpack unsigned char* frame into structured values
     PKT_UNPACK(_args_cmdSetMotorMode, argsPtr, frame);
 
-    pidObjs[0].pwmDes = argsPtr->thrust1;
-    pidObjs[1].pwmDes = argsPtr->thrust2;
 
-    pidObjs[0].mode = 1;
+    pidSetPWMDes(LEFT_LEGS_PID_NUM, argsPtr->thrust1);
+    pidSetPWMDes(RIGHT_LEGS_PID_NUM, argsPtr->thrust2);
+
+    pidSetMode(LEFT_LEGS_PID_NUM,1);
 
     return 1;
  }
@@ -208,8 +210,11 @@ unsigned char cmdSetMotorMode(unsigned char type, unsigned char status, unsigned
 unsigned char cmdSetPIDGains(unsigned char type, unsigned char status, unsigned char length, unsigned char *frame) {
     //Unpack unsigned char* frame into structured values
     PKT_UNPACK(_args_cmdSetPIDGains, argsPtr, frame);
-    pidSetGains(0,argsPtr->Kp1,argsPtr->Ki1,argsPtr->Kd1,argsPtr->Kaw1, argsPtr->Kff1);
-    pidSetGains(1,argsPtr->Kp2,argsPtr->Ki2,argsPtr->Kd2,argsPtr->Kaw2, argsPtr->Kff2);
+    pidSetGains(LEFT_LEGS_PID_NUM,
+            argsPtr->Kp1,argsPtr->Ki1,argsPtr->Kd1,argsPtr->Kaw1, argsPtr->Kff1);
+
+    pidSetGains(LEFT_LEGS_PID_NUM,
+            argsPtr->Kp2,argsPtr->Ki2,argsPtr->Kd2,argsPtr->Kaw2, argsPtr->Kff2);
 
     radioSendData(RADIO_DST_ADDR, status, CMD_SET_PID_GAINS, length, frame, 0); //TODO: Robot should respond to source of query, not hardcoded address
     //Send confirmation packet
@@ -246,8 +251,8 @@ unsigned char cmdSetVelProfile(unsigned char type, unsigned char status, unsigne
         vel2[i] = delta2[i] / interval2[i];
     }
 
-    setPIDVelProfile(0, interval1, delta1, vel1, argsPtr->flagLeft);
-    setPIDVelProfile(1, interval2, delta2, vel2, argsPtr->flagRight);
+    setPIDVelProfile(LEFT_LEGS_PID_NUM, interval1, delta1, vel1, argsPtr->flagLeft);
+    setPIDVelProfile(RIGHT_LEGS_PID_NUM, interval2, delta2, vel2, argsPtr->flagRight);
 
     //Send confirmation packet
     // TODO : Send confirmation packet with packet index
@@ -255,31 +260,33 @@ unsigned char cmdSetVelProfile(unsigned char type, unsigned char status, unsigne
 }
 
 unsigned char cmdPIDStartMotors(unsigned char type, unsigned char status, unsigned char length, unsigned char *frame) {
-    pidObjs[0].timeFlag = 0;
-    pidObjs[1].timeFlag = 0;
-    pidSetInput(0, 0);
-    pidObjs[0].p_input = pidObjs[0].p_state;
-    pidOn(0);
-    pidSetInput(1, 0);
-    pidObjs[1].p_input = pidObjs[1].p_state;
-    pidOn(1);
+
+    //All actions have been moved to a PID module function
+    pidStartMotor(LEFT_LEGS_PID_NUM);
+    pidStartMotor(RIGHT_LEGS_PID_NUM);
+
     return 1;
 }
 
 unsigned char cmdPIDStopMotors(unsigned char type, unsigned char status, unsigned char length, unsigned char *frame) {
-    pidObjs[0].onoff = 0;
-    pidObjs[1].onoff = 0;
+
+    pidOff(LEFT_LEGS_PID_NUM);
+    pidOff(RIGHT_LEGS_PID_NUM);
+
     return 1;
 }
 
 unsigned char cmdZeroPos(unsigned char type, unsigned char status, unsigned char length, unsigned char *frame) {
     long motor_count[2];
-    motor_count[0] = pidObjs[0].p_state;
-    motor_count[1] = pidObjs[1].p_state;
+    motor_count[0] = pidGetPState(0);
+    motor_count[1] = pidGetPState(1);
 
     radioSendData(RADIO_DST_ADDR, status, CMD_GET_AMS_POS,  //TODO: Robot should respond to source of query, not hardcoded address
         sizeof(motor_count), (unsigned char *)motor_count, 0);
-    pidZeroPos(0); pidZeroPos(1);
+
+    pidZeroPos(LEFT_LEGS_PID_NUM);
+    pidZeroPos(RIGHT_LEGS_PID_NUM);
+    
     return 1;
 }
 
@@ -287,10 +294,15 @@ unsigned char cmdSetPhase(unsigned char type, unsigned char status, unsigned cha
     //Unpack unsigned char* frame into structured values
     PKT_UNPACK(_args_cmdSetPhase, argsPtr, frame);
 
-    long error = argsPtr->phase - ((pidObjs[0].p_state & 0x0000FFFF) - (pidObjs[1].p_state & 0x0000FFFF));
+    long p_state[2], error;
+    p_state[0] = pidGetPState(LEFT_LEGS_PID_NUM);
+    p_state[1] = pidGetPState(RIGHT_LEGS_PID_NUM);
     
-    pidObjs[0].p_input = pidObjs[0].p_state + error/2;
-    pidObjs[1].p_input = pidObjs[1].p_state - error/2;
+    error = argsPtr->offset - ( (p_state[0] & 0x0000FFFF) - (p_state[1] & 0x0000FFFF) );
+
+    pidSetPInput(LEFT_LEGS_PID_NUM, p_state[0] + error/2);
+    pidSetPInput(RIGHT_LEGS_PID_NUM, p_state[1] - error/2);
+
     return 1;
 }
 

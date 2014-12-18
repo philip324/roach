@@ -72,6 +72,7 @@ int main() {
     radioSetSrcAddr(RADIO_SRC_ADDR);
     radioSetSrcPanID(RADIO_PAN_ID);
 
+    //TODO: Move to UART module, or UART init function.
     uart_tx_packet = NULL;
     uart_tx_flag = 0;
     uartInit(&cmdPushFunc);
@@ -95,10 +96,10 @@ int main() {
         radioProcess();
 
         // Send outgoing uart packets
-        if(uart_tx_flag) {
-            uartSendPacket(uart_tx_packet);
-            uart_tx_flag = 0;
-        }
+//        if(uart_tx_flag) {
+//            uartSendPacket(uart_tx_packet);
+//            uart_tx_flag = 0;
+//        }
 
 
         // move received packets to function queue
