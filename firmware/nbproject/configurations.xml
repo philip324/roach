@@ -31,6 +31,9 @@
       <logicalFolder name="lib" displayName="lib" projectFiles="true">
         <itemPath>../lib/cmd_const.h</itemPath>
         <itemPath>../lib/consts.h</itemPath>
+        <itemPath>../lib/init.h</itemPath>
+        <itemPath>../lib/interrupts.h</itemPath>
+        <itemPath>../lib/led.h</itemPath>
         <itemPath>../lib/pid-ip2.5.h</itemPath>
         <itemPath>../lib/tests.h</itemPath>
         <itemPath>../lib/telem.h</itemPath>
@@ -118,7 +121,7 @@
       </compileType>
       <makeCustomizationType>
         <makeCustomizationPreStepEnabled>true</makeCustomizationPreStepEnabled>
-        <makeCustomizationPreStep>python ../../imageproc-lib/version.py 'DHALDANE_ROACH;AMS_ENC'</makeCustomizationPreStep>
+        <makeCustomizationPreStep>python ..\..\imageproc-lib\prebuild.py ..\..\imageproc-settings\settings.h</makeCustomizationPreStep>
         <makeCustomizationPostStepEnabled>false</makeCustomizationPostStepEnabled>
         <makeCustomizationPostStep></makeCustomizationPostStep>
         <makeCustomizationPutChecksumInUserID>false</makeCustomizationPutChecksumInUserID>
@@ -140,7 +143,7 @@
         <property key="enable-symbols" value="true"/>
         <property key="enable-unroll-loops" value="false"/>
         <property key="extra-include-directories"
-                  value="../lib;../../imageproc-lib;source"/>
+                  value="../lib;../../imageproc-lib;source;../../imageproc-settings"/>
         <property key="isolate-each-function" value="false"/>
         <property key="keep-inline" value="false"/>
         <property key="oXC16gcc-align-arr" value="false"/>
@@ -227,7 +230,7 @@
         <property key="secure-flash" value="no_flash"/>
         <property key="secure-ram" value="no_ram"/>
         <property key="secure-write-protect" value="no_write_protect"/>
-        <property key="stack-size" value="16"/>
+        <property key="stack-size" value="512"/>
         <property key="symbol-stripping" value=""/>
         <property key="trace-symbols" value=""/>
         <property key="warn-section-align" value="false"/>
