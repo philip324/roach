@@ -1,19 +1,21 @@
-// Contents of this file are copyright Andrew Pullin, 2013
+// XC compiler include
+#include <xc.h>
 
+// Library includes
+#include <string.h> //for memcpy
+#include <timer.h>  //This is a terrible hack to avoid bus conflicts.
+//TODO: find source of bus problems and fix
+
+// imageproc-lib includes
 #include "utils.h"
+#include "sclock.h"
 #include "settings.h"
 #include "dfmem.h"
 #include "telem.h"
 #include "radio.h"
 #include "at86rf231_driver.h"
-#include "sclock.h"
-//#include "sys_service.h"
 #include "cmd.h" //for CMD codes
-#include <string.h> //for memcpy
 
-//This is a terrible hack to avoid bus conflicts.
-//TODO: find source of bus problems and fix
-#include <timer.h>
 
 //Timer parameters
 #define TIMER_FREQUENCY     1000.0                // 1000 Hz

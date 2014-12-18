@@ -31,9 +31,6 @@
       <logicalFolder name="lib" displayName="lib" projectFiles="true">
         <itemPath>../lib/cmd_const.h</itemPath>
         <itemPath>../lib/consts.h</itemPath>
-        <itemPath>../lib/init.h</itemPath>
-        <itemPath>../lib/interrupts.h</itemPath>
-        <itemPath>../lib/led.h</itemPath>
         <itemPath>../lib/pid-ip2.5.h</itemPath>
         <itemPath>../lib/tests.h</itemPath>
         <itemPath>../lib/telem.h</itemPath>
@@ -73,8 +70,6 @@
         <itemPath>../../imageproc-lib/version.c</itemPath>
       </logicalFolder>
       <logicalFolder name="lib" displayName="lib" projectFiles="true">
-        <itemPath>../lib/init.c</itemPath>
-        <itemPath>../lib/interrupts.c</itemPath>
         <itemPath>../lib/pid-ip2.5.c</itemPath>
         <itemPath>../lib/traps.c</itemPath>
         <itemPath>../lib/telem.c</itemPath>
@@ -232,7 +227,7 @@
         <property key="secure-flash" value="no_flash"/>
         <property key="secure-ram" value="no_ram"/>
         <property key="secure-write-protect" value="no_write_protect"/>
-        <property key="stack-size" value="512"/>
+        <property key="stack-size" value="16"/>
         <property key="symbol-stripping" value=""/>
         <property key="trace-symbols" value=""/>
         <property key="warn-section-align" value="false"/>

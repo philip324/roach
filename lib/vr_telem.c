@@ -1,18 +1,17 @@
+//vr_telem.c , VelociRoACH specific telemetry packet format
 
-// Contents of this file are copyright Andrew Pullin, 2013
-
-//or_telem.c , OctoRoACH specific telemetry packet format
-
-
-
-
+// XC compiler include
 #include <xc.h>
+
+// imageproc-lib includes
+#include "utils.h"
 #include "vr_telem.h"
-#include "ams-enc.h"
 #include "mpu6000.h"
 #include "adc_pid.h"
 #include "tih.h"
+#include "ams-enc.h"
 #include "pid-ip2.5.h"
+
 
 // TODO (apullin) : Remove externs by adding getters to other modules
 //extern pidObj motor_pidObjs[NUM_MOTOR_PIDS];
