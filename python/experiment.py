@@ -14,7 +14,7 @@ import shared
 
 from hall_helpers import *
 
-def main():    
+def main():
     setupSerial()
 
     # Send robot a WHO_AM_I command, verify communications
@@ -27,7 +27,7 @@ def main():
     rightFreq = 0
     leftFreq = 0
     phase = 0
-    telemetry = True
+    telemetry = False
     repeat = False
 
     params = hallParams(motorgains, duration, rightFreq, leftFreq, phase, telemetry, repeat)
@@ -45,7 +45,7 @@ def main():
     while True:
 
         if not(params.repeat):
-            settingsMenu(params, manParams)   
+            settingsMenu(params, manParams)
 
         if params.telemetry:
             # Construct filename
@@ -68,7 +68,7 @@ def main():
         # Trigger telemetry save, which starts as soon as it is received
         if params.telemetry:
         # Pause and wait to start run, including leadin time
-            raw_input("Press enter to start run ...") 
+            raw_input("Press enter to start run ...")
             startTelemetrySave(numSamples)
         #Start robot
         if manParams.useFlag == True:
@@ -85,8 +85,8 @@ def main():
         repeatMenu(params)
 
     print "Done"
-    
-    
+
+
 #Provide a try-except over the whole main function
 # for clean exit. The Xbee module should have better
 # provisions for handling a clean exit, but it doesn't.

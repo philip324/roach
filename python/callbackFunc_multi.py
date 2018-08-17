@@ -27,9 +27,9 @@ pktFormat = { \
     command.ECHO:                   'c' ,\
     command.SET_VEL_PROFILE:        '8h' ,\
     command.WHO_AM_I:               '', \
-    command.ZERO_POS:               '=2l', \
+    command.ZERO_POS:               '=2l'
     }
-               
+
 #XBee callback function, called every time a packet is recieved
 def xbee_received(packet):
     rf_data = packet.get('rf_data')
@@ -37,29 +37,29 @@ def xbee_received(packet):
     (src_addr, ) = unpack('>H', packet.get('source_addr'))
     #id = packet.get('id')
     #options = ord(packet.get('options'))
-    
+
     #Only print pertinent SRC lines
     #This also allows us to turn off messages on the fly, for telem download
     for r in shared.ROBOTS:
         if r.DEST_ADDR_int == src_addr:
             if r.VERBOSE:
                 print "SRC: 0x%04X | " % src_addr,
-   
+
     status = ord(rf_data[0])
     type = ord(rf_data[1])
     data = rf_data[2:]
-    
-    
+
+
     #Record the time the packet is received, so command timeouts
     # can be done
     shared.last_packet_time = time.time()
-    
+
     try:
         pattern = pktFormat[type]
     except KeyError:
         print "Got bad packet type: ",type
         return
-    
+
     try:
         # GET_IMU_DATA
         if type == command.GET_IMU_DATA:
@@ -80,7 +80,7 @@ def xbee_received(packet):
         # ECHO
         elif type == command.ECHO:
             print "echo: status = ",status," type=",type," data = ",data
-            
+
         # SET_PID_GAINS
         elif type == command.SET_PID_GAINS:
             gains = unpack(pattern, data)
@@ -88,7 +88,7 @@ def xbee_received(packet):
             for r in shared.ROBOTS:
                 if r.DEST_ADDR_int == src_addr:
                     r.motor_gains_set = True
-        
+
         # FLASH_READBACK
         elif type == command.FLASH_READBACK:
             #shared.pkts = shared.pkts + 1
@@ -105,7 +105,7 @@ def xbee_received(packet):
                             r.telemtryData[telem_index] = datum
                         else:
                             print "Got out of range telem_index =",telem_index
-        
+
         # ERASE_SECTORS
         elif type == command.ERASE_SECTORS:
             datum = unpack(pattern, data)
@@ -113,8 +113,8 @@ def xbee_received(packet):
             if datum[0] != 0:
                 for r in shared.ROBOTS:
                     if r.DEST_ADDR_int == src_addr:
-                        r.flash_erased = datum[0] 
-            
+                        r.flash_erased = datum[0]
+
         # SLEEP
         elif type == command.SLEEP:
             datum = unpack(pattern, data)
@@ -123,22 +123,22 @@ def xbee_received(packet):
                 shared.awake = True;
         # ZERO_POS
         elif type == command.ZERO_POS:
-            print 'AMS zeros established; Previous motor positions:',
+            # print 'AMS zeros established; Previous motor positions:',
             motor = unpack(pattern,data)
             print motor
-            
+
         # SET_VEL_PROFILE
         elif (type == command.SET_VEL_PROFILE):
             print "Set Velocity Profile readback:"
             temp = unpack(pattern, data)
             print temp
-            
+
         # WHO_AM_I
         elif (type == command.WHO_AM_I):
-            print "query : ",data
+            print "query: ",data,"\n"
             for r in shared.ROBOTS:
                 if r.DEST_ADDR_int == src_addr:
-                    r.robot_queried = True 
+                    r.robot_queried = True
 
     except KeyboardInterrupt:
         print "\nRecieved Ctrl+C in callbackfunc, exiting."

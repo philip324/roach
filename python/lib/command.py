@@ -8,7 +8,7 @@ Modified by Andrew Pullin for OctoROACH
 """
 
 # CMD values of 0x00 - 0x7F(127) are defined here
-# Add CMD definitions 
+# Add CMD definitions
 # for bootloader (0x00 - 0x1F)
 CMD_NACK = 0x00        # START_APPLICATION = 0
 CMD_ACK = 0x01
@@ -43,7 +43,7 @@ START_AUTO_CTRL = 0x30
 STOP_AUTO_CTRL = 0x31
 
 ERASE_MEM_SECTOR = 0x3A
- 
+
 RESET_STOPWATCH = 0x3B
 
 BASE_ECHO = 0x3f
@@ -69,6 +69,6 @@ ZERO_POS                =   0x90
 START_TIMED_RUN         =   0x91
 PID_STOP_MOTORS         =   0x92
 SET_PHASE               =   0x93
-SET_MOTOR_MODE      =   0x94
+SET_MOTOR_MODE          =   0x94
 
 # CMD values of 0xF0(240) - 0xFF(255) are reserved for future use

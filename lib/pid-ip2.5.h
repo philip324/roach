@@ -35,6 +35,11 @@
 #define PID_MODE_CONTROLED  0
 #define PID_MODE_PWMPASS    1
 
+// Set constants of lower and upper bounds to respond to errors in mod 2 pi position control; for now set at 3*pi/2 and 7*pi/4
+#define LEGS_FULL_REV 65536
+#define ERR_FWD_BOUND 49151
+#define ERR_BWD_BOUND 57337
+
 // pid type for leg control
 typedef struct
 {

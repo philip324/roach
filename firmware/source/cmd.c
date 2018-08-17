@@ -331,6 +331,9 @@ unsigned char cmdSetPhase(unsigned char type, unsigned char status, unsigned cha
 
     pidSetPInput(LEFT_LEGS_PID_NUM, p_state[0] + error/2);
     pidSetPInput(RIGHT_LEGS_PID_NUM, p_state[1] - error/2);
+    // For different deltas
+    //pidSetPInput(LEFT_LEGS_PID_NUM, argsPtr->offset);
+    //pidSetPInput(RIGHT_LEGS_PID_NUM, 0);
 
     return 1;
 }

@@ -29,19 +29,19 @@ class GaitConfig:
             self.motorgains = [0,0,0,0,0 , 0,0,0,0,0]
         else:
             self.motorgains = motorgains
-        
+
         self.duration = duration
         self.rightFreq = rightFreq
         self.leftFreq = leftFreq
         self.phase = phase
         self.repeat = repeat
-        
-        
+
+
 class Velociroach:
     motor_gains_set = False
     robot_queried = False
     flash_erased = False
-    
+
     currentGait = GaitConfig()
 
     dataFileName = ''
@@ -61,19 +61,19 @@ class Velociroach:
 
     def clAnnounce(self):
         print "DST: 0x%02X | " % self.DEST_ADDR_int,
-    
+
     def tx(self, status, type, data):
         payload = chr(status) + chr(type) + ''.join(data)
         self.xb.tx(dest_addr = self.DEST_ADDR, data = payload)
-        
+
     def reset(self):
         self.clAnnounce()
         print "Resetting robot..."
         self.tx( 0, command.SOFTWARE_RESET, pack('h',1))
-        
+
     def sendEcho(self, msg):
         self.tx( 0, command.ECHO, msg)
-        
+
     def query(self, retries = 8):
         self.robot_queried = False
         tries = 1
@@ -82,9 +82,9 @@ class Velociroach:
             print "Querying robot , ",tries,"/",retries
             self.tx( 0,  command.WHO_AM_I, "Robot Echo") #sent text is unimportant
             tries = tries + 1
-            time.sleep(0.1)   
-    
-    #TODO: getting flash erase to work is critical to function testing (pullin)    
+            time.sleep(0.1)
+
+    #TODO: getting flash erase to work is critical to function testing (pullin)
     #existing VR firmware does not send a packet when the erase is done, so this will hang and retry.
     def eraseFlashMem(self, timeout = 8):
         eraseStartTime = time.time()
@@ -97,21 +97,29 @@ class Velociroach:
             if (time.time() - eraseStartTime) > timeout:
                 print"Flash erase timeout, retrying;"
                 self.tx( 0, command.ERASE_SECTORS, pack('L',self.numSamples))
-                eraseStartTime = time.time()    
-        
+                eraseStartTime = time.time()
+
     def setPhase(self, phase):
         self.clAnnounce()
         print "Setting phase to 0x%04X " % phase
         self.tx( 0, command.SET_PHASE, pack('l', phase))
-        time.sleep(0.05)        
-    
+        time.sleep(0.05)
+
     def startTimedRun(self, duration):
         self.clAnnounce()
         print "Starting timed run of",duration," ms"
         self.tx( 0, command.START_TIMED_RUN, pack('h', duration))
         time.sleep(0.05)
-        
-    def findFileName(self):   
+
+    def pidStartMotors(self):
+        self.clAnnounce()
+        self.tx(0, command.PID_START_MOTORS, "starting pid control")
+
+    def pidStopMotors(self):
+        self.clAnnounce()
+        self.tx(0, command.PID_STOP_MOTORS, "stopping pid control")
+
+    def findFileName(self):
         # Construct filename
         path     = 'Data/'
         name     = 'trial'
@@ -121,42 +129,35 @@ class Velociroach:
         self.dataFileName = root + '_imudata.txt'
         #self.clAnnounce()
         #print "Data file:  ", shared.dataFileName
-        
+
     def setVelProfile(self, gaitConfig):
         self.clAnnounce()
         print "Setting stride velocity profile to: "
-        
+
         periodLeft = 1000.0 / gaitConfig.leftFreq
         periodRight = 1000.0 / gaitConfig.rightFreq
-        
+
         deltaConv = 0x4000 # TODO: this needs to be clarified (ronf, dhaldane, pullin)
-        
+
         lastLeftDelta = 1-sum(gaitConfig.deltasLeft) #TODO: change this to explicit entry, with a normalization here
         lastRightDelta = 1-sum(gaitConfig.deltasRight)
-        
+
         temp = [int(periodLeft), int(gaitConfig.deltasLeft[0]*deltaConv), int(gaitConfig.deltasLeft[1]*deltaConv),
                 int(gaitConfig.deltasLeft[2]*deltaConv), int(lastLeftDelta*deltaConv) , 0, \
                 int(periodRight), int(gaitConfig.deltasRight[0]*deltaConv), int(gaitConfig.deltasRight[1]*deltaConv),
                 int(gaitConfig.deltasRight[2]*deltaConv), int(lastRightDelta*deltaConv), 0]
-        
+
         self.clAnnounce()
         print "     ",temp
-        
+
         self.tx( 0, command.SET_VEL_PROFILE, pack('12h', *temp))
         time.sleep(0.1)
-    
-    #TODO: This may be a vestigial function. Check versus firmware.
-    def setMotorMode(self, motorgains, retries = 8 ):
-        tries = 1
-        self.motorGains = motorgains
-        self.motor_gains_set = False
-        while not(self.motor_gains_set) and (tries <= retries):
-            self.clAnnounce()
-            print "Setting motor mode...   ",tries,"/8"
-            self.tx( 0, command.SET_MOTOR_MODE, pack('10h',*gains))
-            tries = tries + 1
-            time.sleep(0.1)
-    
+
+
+    def setMotorMode(self, thrust_left, thrust_right):
+        thrusts = [thrust_left, thrust_right]
+        self.tx(0, command.SET_MOTOR_MODE, pack('hh',*thrusts))
+
     ######TODO : sort out this function and flashReadback below
     def downloadTelemetry(self, timeout = 5, retry = True):
         #suppress callback output messages for the duration of download
@@ -164,7 +165,7 @@ class Velociroach:
         self.clAnnounce()
         print "Started telemetry download"
         self.tx( 0, command.FLASH_READBACK, pack('=L',self.numSamples))
-                
+
         dlStart = time.time()
         shared.last_packet_time = dlStart
         #bytesIn = 0
@@ -181,9 +182,9 @@ class Velociroach:
                 #for index,item in enumerate(self.telemtryData):
                 #    if item == []:
                 #        print "#",index+1,
-                print "" 
+                print ""
                 break
-                # Retry telem download            
+                # Retry telem download
                 if retry == True:
                     raw_input("Press Enter to restart telemetry readback ...")
                     self.telemtryData = [ [] ] * self.numSamples
@@ -193,7 +194,7 @@ class Velociroach:
                     shared.last_packet_time = dlStart
                     self.tx( 0, command.FLASH_READBACK, pack('=L',self.numSamples))
                 else: #retry == false
-                    print "Not trying telemetry download."          
+                    print "Not trying telemetry download."
 
         dlEnd = time.time()
         dlTime = dlEnd - dlStart
@@ -207,7 +208,7 @@ class Velociroach:
         #print "Got ",self.numSamples,"samples in ",dlTime,"seconds"
         self.clAnnounce()
         print "DL rate: {0:.2f} KB/s".format(datarate)
-        
+
         #enable callback output messages
         self.VERBOSE = True
 
@@ -219,14 +220,14 @@ class Velociroach:
         self.findFileName()
         self.writeFileHeader()
         fileout = open(self.dataFileName, 'a')
-        
+
         sanitized = [item for item in self.telemtryData if item!= []];
-        
+
         np.savetxt(fileout , np.array(sanitized), self.telemFormatString, delimiter = ',')
         fileout.close()
         self.clAnnounce()
         print "Telemetry data saved to", self.dataFileName
-        
+
     def writeFileHeader(self):
         fileout = open(self.dataFileName,'w')
         #write out parameters in format which can be imported to Excel
@@ -239,7 +240,7 @@ class Velociroach:
         fileout.write('%  Lead In /Lead Out        = ' + '\n')
         fileout.write('%  Deltas (Fractional)      = ' + repr(self.currentGait.deltasLeft) + ',' + repr(self.currentGait.deltasRight) + '\n')
         fileout.write('%  Phase                    = ' + repr(self.currentGait.phase) + '\n')
-            
+
         fileout.write('%  Experiment.py \n')
         fileout.write('%  Motor Gains    = ' + repr(self.currentGait.motorgains) + '\n')
         fileout.write('% Columns: \n')
@@ -250,27 +251,27 @@ class Velociroach:
     def setupTelemetryDataTime(self, runtime):
         ''' This is NOT current for Velociroach! '''
         #TODO : update for Velociroach
-        
+
         # Take the longer number, between numSamples and runTime
         nrun = int(self.telemSampleFreq * runtime / 1000.0)
         self.numSamples = nrun
-        
+
         #allocate an array to write the downloaded telemetry data into
         self.telemtryData = [ [] ] * self.numSamples
         self.clAnnounce()
         print "Telemetry samples to save: ",self.numSamples
-        
+
     def setupTelemetryDataNum(self, numSamples):
         ''' This is NOT current for Velociroach! '''
         #TODO : update for Velociroach
-     
+
         self.numSamples = numSamples
-        
+
         #allocate an array to write the downloaded telemetry data into
         self.telemtryData = [ [] ] * self.numSamples
         self.clAnnounce()
         print "Telemetry samples to save: ",self.numSamples
-    
+
     def startTelemetrySave(self):
         self.clAnnounce()
         print "Started telemetry save of", self.numSamples," samples."
@@ -278,32 +279,33 @@ class Velociroach:
 
     def setMotorGains(self, gains, retries = 8):
         tries = 1
-        self.motorGains = gains
+        self.currentGait.motorGains = gains
         while not(self.motor_gains_set) and (tries <= retries):
             self.clAnnounce()
             print "Setting motor gains...   ",tries,"/8"
             self.tx( 0, command.SET_PID_GAINS, pack('10h',*gains))
             tries = tries + 1
             time.sleep(0.3)
-            
-    def setGait(self, gaitConfig, zero_position = False):
+
+    def setGait(self, gaitConfig, zero_position = True):
         self.currentGait = gaitConfig
-        
+
         self.clAnnounce()
+        if zero_position:
+            self.zeroPosition()
         print " --- Setting complete gait config --- "
         self.setPhase(gaitConfig.phase)
         self.setMotorGains(gaitConfig.motorgains)
         self.setVelProfile(gaitConfig) #whole object is passed in, due to several references
-        if zero_position:
-            self.zeroPosition()
-        
+
         self.clAnnounce()
         print " ------------------------------------ "
-        
+
     def zeroPosition(self):
         self.tx( 0, command.ZERO_POS, 'zero') #actual data sent in packet is not relevant
         time.sleep(0.1) #built-in holdoff, since reset apparently takes > 50ms
-        
+
+
 ########## Helper functions #################
 #TODO: find a home for these? Possibly in BaseStation class (pullin, abuchan)
 
@@ -315,42 +317,42 @@ def setupSerial(COMPORT , BAUDRATE , timeout = 3, rtscts = 0):
     except serial.serialutil.SerialException:
         print "Could not open serial port:",shared.BS_COMPORT
         sys.exit(1)
-    
+
     shared.ser = ser
     ser.flushInput()
     ser.flushOutput()
     return XBee(ser, callback = xbee_received)
-    
-    
+
+
 def xb_safe_exit(xb):
     print "Halting xb"
     if xb is not None:
         xb.halt()
-        
+
     print "Closing serial"
     if xb.serial is not None:
         xb.serial.close()
-        
+
     print "Exiting..."
     sys.exit(1)
-    
 
-   
+
+
 def verifyAllMotorGainsSet():
     #Verify all robots have motor gains set
     for r in shared.ROBOTS:
         if not(r.motor_gains_set):
             print "CRITICAL : Could not SET MOTOR GAINS on robot 0x%02X" % r.DEST_ADDR_int
             xb_safe_exit(shared.xb)
-            
+
 def verifyAllTailGainsSet():
     #Verify all robots have motor gains set
     for r in shared.ROBOTS:
         if not(r.tail_gains_set):
             print "CRITICAL : Could not SET TAIL GAINS on robot 0x%02X" % r.DEST_ADDR_int
             xb_safe_exit(shared.xb)
-            
-def verifyAllQueried():            
+
+def verifyAllQueried():
     for r in shared.ROBOTS:
         if not(r.robot_queried):
             print "CRITICAL : Could not query robot 0x%02X" % r.DEST_ADDR_int

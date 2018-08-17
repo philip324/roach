@@ -105,6 +105,17 @@ void pidSetup() {
 
 //Returns pointer to non-active buffer
 
+void pidSetOutputChannel(unsigned int top) {
+    
+    if (top  == 1) {
+        pidObjs[LEFT_LEGS_PID_NUM].output_channel  = 1;
+        pidObjs[RIGHT_LEGS_PID_NUM].output_channel  = 2;
+    } else {
+        pidObjs[LEFT_LEGS_PID_NUM].output_channel  = 3;
+        pidObjs[RIGHT_LEGS_PID_NUM].output_channel  = 4;
+    }
+}
+
 pidVelLUT* otherBuff(pidVelLUT* array, pidVelLUT* ptr) {
     if (ptr >= &(array[NUM_PIDS])) {
         return ptr - NUM_PIDS;
@@ -236,6 +247,11 @@ void pidSetGains(int pid_num, int Kp, int Ki, int Kd, int Kaw, int ff) {
     pidObjs[pid_num].Ki = Ki;
     pidObjs[pid_num].Kd = Kd;
     pidObjs[pid_num].Kaw = Kaw;
+    pidObjs[pid_num].feedforward = ff;
+}
+
+//This command will set the pwm value to *ff* for motor corresponding to *pid_num*.
+void pidSetPWM(int pid_num, int ff) {
     pidObjs[pid_num].feedforward = ff;
 }
 
@@ -565,6 +581,16 @@ void pidSetControl() {
         // p_input has scaled velocity interpolation to make smoother
         // p_state is [16].[16]
         pidObjs[j].p_error = pidObjs[j].p_input + pidObjs[j].interpolate - pidObjs[j].p_state;
+//        long p_mod_error;
+//        p_mod_error = (pidObjs[j].p_error & 0x0000FFFF); // Clobber the MSBs corresponding to full revolutions
+//        if (p_mod_error < ERR_FWD_BOUND) {
+//            pidObjs[j].p_error = p_mod_error; //Take the mod 2 pi error if you're behind in the cycle
+//        } else if (p_mod_error > ERR_BWD_BOUND) {
+//            pidObjs[j].p_error = p_mod_error - 65535; //Take the mod 2 pi error shifted down by 2 pi if you're ahead in the cycle
+//        } else {
+//            pidObjs[j].p_error = 0; // Wait for reference if you're too far away from it
+//        }
+
         pidObjs[j].v_error = pidObjs[j].v_input - pidObjs[j].v_state; // v_input should be revs/sec
         //Update values
         UpdatePID(&(pidObjs[j]));
